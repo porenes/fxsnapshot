@@ -57,7 +57,7 @@ const saveFrame = async (page, filename) => {
       const iteration = String(count).padStart(4, "0");
       const f = `images/${iteration}-${fxhash}.png`;
       console.log(f);
-      featureList.push({ file: f, features });
+      featureList.push({ file: f, ...features });
       await saveFrame(page, f);
       if (count < total) {
         count += 1;
@@ -67,6 +67,30 @@ const saveFrame = async (page, filename) => {
           "images/feat-" + Date.now() + ".json",
           JSON.stringify(featureList)
         );
+        //get all features
+        let featureOptions = Object.keys(featureList[0]).filter(
+          (k) => k !== "file"
+        );
+        // .map((o) => [o, {}]);
+        let featureMap = new Map();
+        //Create an array of values per feature
+        featureOptions.forEach((o) => {
+          const optVal = featureList.flatMap((it) => {
+            console.log("it[o] - ", it[o]);
+            return it[o];
+          });
+          console.log("optVal for " + o, optVal);
+          const occurrences = optVal.reduce(function (acc, curr) {
+            return acc[curr] ? ++acc[curr] : (acc[curr] = 1), acc;
+          }, {});
+          featureMap.set(o, occurrences);
+        });
+        console.log(featureMap);
+        await fs.writeFile(
+          "images/feat-map-" + Date.now() + ".json",
+          JSON.stringify(featureMap)
+        );
+        // console.log(featureOptions);
         process.exit(0);
       }
     }
