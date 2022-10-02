@@ -1,12 +1,12 @@
-const puppeteer = require('puppeteer');
-const fs = require('fs').promises;
+const puppeteer = require("puppeteer");
+const fs = require("fs").promises;
 
 if (isNaN(parseInt(process.argv[2]))) {
-  console.log('usage: node fxsnapshot.js <count>');
+  console.log("usage: node fxsnapshot.js <count>");
   process.exit(1);
 }
 
-const url = 'http://localhost:8080';
+const url = "http://localhost:8080";
 
 const viewportSettings = {
   deviceScaleFactor: 1,
@@ -15,7 +15,7 @@ const viewportSettings = {
 };
 
 const saveFrame = async (page, filename) => {
-  const base64 = await page.$eval('canvas', (el) => {
+  const base64 = await page.$eval("canvas", (el) => {
     return el.toDataURL();
   });
   const pureBase64 = base64.replace(/^data:image\/png;base64,/, "");
@@ -26,7 +26,6 @@ const saveFrame = async (page, filename) => {
 };
 
 (async () => {
-
   let browser = await puppeteer.launch({
     ignoreHTTPSErrors: true,
   });
@@ -42,31 +41,36 @@ const saveFrame = async (page, filename) => {
     process.exit(1);
   }
 
-  page.on('error', (err) => {
-    console.log('PAGER ERROR:', err);
+  page.on("error", (err) => {
+    console.log("PAGER ERROR:", err);
   });
 
   let total = parseInt(process.argv[2]);
   let count = 1;
-  page.on('console', async (msg) => {
+  let featureList = [];
+  page.on("console", async (msg) => {
     const text = msg.text();
     let m = text.match(/TRIGGER PREVIEW/);
     if (m) {
       const fxhash = await page.evaluate(() => window.fxhash);
-      const iteration = String(count).padStart(4, '0');
+      const features = await page.evaluate(() => window.$fxhashFeatures);
+      const iteration = String(count).padStart(4, "0");
       const f = `images/${iteration}-${fxhash}.png`;
       console.log(f);
+      featureList.push({ file: f, features });
       await saveFrame(page, f);
       if (count < total) {
         count += 1;
         await page.goto(url);
-      }
-      else {
+      } else {
+        await fs.writeFile(
+          "images/feat-" + Date.now() + ".json",
+          JSON.stringify(featureList)
+        );
         process.exit(0);
       }
     }
   });
 
   await page.goto(url);
-
 })();
