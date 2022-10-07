@@ -53,7 +53,7 @@ const saveFrame = async (page, filename) => {
   let browser = await puppeteer.launch({
     ignoreHTTPSErrors: true,
     headless: false,
-    args: ["--use-gl=egl"],
+    args: ["--use-gl=swiftshader"],
   });
 
   if (!browser) {
