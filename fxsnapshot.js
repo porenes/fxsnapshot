@@ -10,8 +10,8 @@ const url = "http://localhost:8080";
 
 const viewportSettings = {
   deviceScaleFactor: 1,
-  width: 800,
-  height: 800,
+  width: 4800,
+  height: 4800,
 };
 
 const saveFrame = async (page, filename) => {
@@ -28,6 +28,8 @@ const saveFrame = async (page, filename) => {
 (async () => {
   let browser = await puppeteer.launch({
     ignoreHTTPSErrors: true,
+    headless: false,
+    args: ["--use-gl=egl"],
   });
 
   if (!browser) {
