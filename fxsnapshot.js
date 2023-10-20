@@ -19,9 +19,9 @@ const argv = require("yargs")
     }
   )
   .default({
-    url: "http://localhost:8080/",
-    width: 800,
-    height: 800,
+    url: "http://localhost:8080/?debug=1",
+    width: 1600,
+    height: 1600,
     timeout: 120,
   })
   .describe("url", "Local token url")
@@ -77,10 +77,10 @@ const saveFrame = async (page, filename) => {
   let featureList = [];
   page.on("console", async (msg) => {
     const text = msg.text();
-    let m = text.match(/TRIGGER PREVIEW/);
+    let m = text.match(/FXPREVIEW/);
     if (m) {
       const fxhash = await page.evaluate(() => window.fxhash);
-      const features = await page.evaluate(() => window.$fxhashFeatures);
+      const features = await page.evaluate(() => $fx.getFeatures());
       const iteration = String(count).padStart(4, "0");
       const f = `images/${iteration}-${fxhash}.png`;
       console.log(f);
@@ -88,7 +88,7 @@ const saveFrame = async (page, filename) => {
       await saveFrame(page, f);
       if (count < total) {
         count += 1;
-        await page.goto(argv.url);
+        await page.goto(argv.url + `&fxiteration=${count}`);
       } else {
         await fs.writeFile(
           "images/feat-" + Date.now() + ".json",
@@ -123,5 +123,5 @@ const saveFrame = async (page, filename) => {
     }
   });
 
-  await page.goto(argv.url);
+  await page.goto(argv.url + `&fxiteration=${count}`);
 })();
